@@ -6,13 +6,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 
+import javax.imageio.ImageIO;
+
 import org.jzy3d.chart.Chart;
 import org.jzy3d.chart.ChartLauncher;
 import org.jzy3d.colors.Color;
 import org.jzy3d.colors.ColorMapper;
 import org.jzy3d.colors.colormaps.ColorMapRainbow;
 import org.jzy3d.maths.Coord3d;
-import org.jzy3d.plot3d.builder.Mapper;
 import org.jzy3d.plot3d.primitives.MultiColorScatter;
 
 
@@ -21,7 +22,7 @@ public class Main {
 	/**
 	 * Global variables
 	 */
-	static private String inputFileName = "data0.csv";
+	static private String inputFileName = "data1.csv";
 
 	
 	public static void main(String[] args) {
@@ -33,6 +34,8 @@ public class Main {
 		int cols = 0;
 		
 		int valueCount = 0;
+		double valueMin = 1000;
+		double valueMax = 0;
 		double valueSum = 0;
 		double valueAverage = 0;
 		
@@ -64,6 +67,8 @@ public class Main {
 					values[i][j] = value;
 					valueCount++;
 					valueSum += value;
+					if(valueMin >= value) valueMin = value;
+					if(valueMax <= value) valueMax = value;
 				}
 			}
 			input.close();
@@ -72,30 +77,47 @@ public class Main {
 			System.out.println(e.getMessage());
 		}
 		
-		
-		float x, y, z;
-		
 		int size = rows*cols;
+
 		
+		int x;
+		int y;
+		double z;
 		Coord3d[] points = new Coord3d[size];
-		
+
+		int coordCounter = 0;
 		// Create scatter points
-		for(int i = 0; i < size; i++) {
-			x = (float)Math.random() - 0.5f;
-		    y = (float)Math.random() - 0.5f;
-		    z = (float)Math.random() - 0.5f;
-		    points[i] = new Coord3d(x, y, z);
+		for(int i=0; i<rows; i++){
+			for(int j = 0; j < cols; j++) {
+				x = i;
+			    y = j;
+			    z = values[i][j];
+			    points[coordCounter] = new Coord3d(x, y, z);
+			    coordCounter++;
+			}
+		    
 		}
 		
 		// Create a drawable scatter with a colormap
-		MultiColorScatter scatter = new MultiColorScatter( points, new ColorMapper( new ColorMapRainbow(), -0.5f, 0.5f ) );
+		ColorMapRainbow colorMapRainbow = new ColorMapRainbow();
+		ColorMapper colorMapper = new ColorMapper(colorMapRainbow , (int)valueMin, (int)valueMax);
+		MultiColorScatter scatter = new MultiColorScatter( points, colorMapper);
+		
 
 		// Create a chart and add scatter
 		Chart chart = new Chart();
 		chart.getAxeLayout().setMainColor(Color.WHITE);
 		chart.getView().setBackgroundColor(Color.BLACK);
-		chart.getScene().add(scatter);
+		chart.getScene().add(scatter);		
 		ChartLauncher.openChart(chart);
+		
+		
+//		File outputfile = new File("image.jpg");
+//		try {
+//			ImageIO.write(chart.screenshot(), "jpg", outputfile);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 		
 		valueAverage = valueSum / valueCount;
 		long endTime = System.currentTimeMillis();
@@ -106,6 +128,9 @@ public class Main {
 		System.out.println("Total Data Count : " + valueCount);
 		System.out.println("Total Data Values : " + valueSum);
 		System.out.println("Average Data Values : " + valueAverage);
+		System.out.println("Minimum Data Value: " + valueMin);
+		System.out.println("Maximum Data Value: " + valueMax);
+		System.out.println("Barycentre: " + scatter.getBarycentre());
 		System.out.println("Computing Time: " + computingTime + "ms");
 		
 	}
