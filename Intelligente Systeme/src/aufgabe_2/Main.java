@@ -1,10 +1,8 @@
 package aufgabe_2;
 
-import java.io.BufferedReader;
+import java.awt.Point;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.LineNumberReader;
 
 import javax.imageio.ImageIO;
 
@@ -23,7 +21,9 @@ public class Main {
 	/**
 	 * Global variables
 	 */
-	static private String inputFileName = "data0.csv";
+	static private String dataFileName = "data0.csv";
+	static private String labelFileName = "label0.csv";
+	static private boolean safeImages = false;
 
 	
 	private static void drawData(double[][] array, int rows, int cols, double minValue, double maxValue) {
@@ -63,17 +63,20 @@ public class Main {
 		ChartLauncher.openChart(chart);
 		
 		// Safe Images
-		for(int i = 0; i < 63; i++) {
-			Coord2d rotateCoord= new Coord2d(0.1, 0.0);
-			chart.getView().rotate(rotateCoord, true);
-			
-			File outputfile = new File("Images\\Data0\\image" + i + ".jpg");
-			try {
-				ImageIO.write(chart.screenshot(), "jpg", outputfile);
-			} catch (IOException e) {
-				e.printStackTrace();
+		if(safeImages) {
+			for(int i = 0; i < 63; i++) {
+				Coord2d rotateCoord= new Coord2d(0.1, 0.0);
+				chart.getView().rotate(rotateCoord, true);
+				
+				File outputfile = new File("Images\\Data0\\image" + i + ".jpg");
+				try {
+					ImageIO.write(chart.screenshot(), "jpg", outputfile);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
+//		System.out.println("Barycentre: " + scatter.getBarycentre());
 		
 	}
 	
@@ -81,68 +84,50 @@ public class Main {
 		
 		long startTime = System.currentTimeMillis();
 		
-		double[][] values = new double[0][0];
-		int rows = 0;
-		int cols = 0;
+		DataObject data = new DataObject(dataFileName);
+		LabelObject label = new LabelObject(labelFileName);
 		
-		int valueCount = 0;
-		double valueMin = 1000;
-		double valueMax = 0;
-		double valueSum = 0;
-		double valueAverage = 0;
+		drawData(data.values, data.rows, data.cols, data.valueMin, data.valueMax);
 		
-		try{						
-			
-			LineNumberReader  lnr = new LineNumberReader(new FileReader(new File(inputFileName)));
-			lnr.skip(Long.MAX_VALUE);
-			
-			rows = lnr.getLineNumber();
-			
-			lnr.close();
-			
-			
-			BufferedReader input = new BufferedReader(new FileReader(inputFileName));
-			input.mark(10000);
-
-			String firstLine = input.readLine();
-			String[] elementCount = firstLine.split(",");
-			cols = elementCount.length;
-			
-			values = new double[rows][cols];
-			
-			input.reset();
-			for(int i = 0; i < rows; i++) {
-				String line = input.readLine();
-				String[] elements = line.split(",");
-				for(int j = 0; j < cols; j++) {
-					Double value = Double.parseDouble(elements[j]);
-					values[i][j] = value;
-					valueCount++;
-					valueSum += value;
-					if(valueMin >= value) valueMin = value;
-					if(valueMax <= value) valueMax = value;
-				}
-			}
-			input.close();
-			
-		} catch (IOException e) {
-			System.out.println(e.getMessage());
-		}
-		
-		drawData(values, rows, cols, valueMin, valueMax);
-		
-		valueAverage = valueSum / valueCount;
 		long endTime = System.currentTimeMillis();
 		long computingTime = endTime - startTime;
+	
+		// Testen, ob der Durchschnittswert der Spalte, in der das Maximum liegt unter dem Maximum ist
+		boolean test[] = new boolean[label.points.size()];
+		int counterFalse = 0;
+		for(int i = 0; i < label.points.size(); i++) {
+			if(data.values[label.points.get(i).x][label.points.get(i).y] >=    data.colAverage[label.points.get(i).y]   ) test[i] = true;
+			else {
+				test[i] = false;
+				counterFalse++;
+			}
+		}
 		
-		System.out.println("Data rows: " + rows);
-		System.out.println("Data cols: " + cols);
-		System.out.println("Total Data Count : " + valueCount);
-		System.out.println("Total Data Values : " + valueSum);
-		System.out.println("Average Data Values : " + valueAverage);
-		System.out.println("Minimum Data Value: " + valueMin);
-		System.out.println("Maximum Data Value: " + valueMax);
-//		System.out.println("Barycentre: " + scatter.getBarycentre());
+		for(int i = 0; i < test.length; i++) {
+			if(!test[i]) System.out.println(i + ": " + label.points.get(i));
+		}
+			
+		int look = 0;
+		Point point = label.points.get(look);
+		System.out.println("Point " + look + ": " + point);
+		System.out.println("Point x coordinate: " + point.x);
+		System.out.println("Point y coordinate: " + point.y);
+		System.out.println("Data Value of Point " + look + ": " + data.values[point.x][point.y]);
+		System.out.println("Col " + point.y + " Average: " + data.colAverage[point.y]);
+		System.out.println("Col " + point.y + " Minimum: " + data.colMinimum[point.y]);
+		System.out.println("Col " + point.y + " Maximum: " + data.colMaximum[point.y]);
+			
+		System.out.println("Failed Tests: " + counterFalse + " / " +test.length);
+		
+		
+		System.out.println("Data rows: " + data.rows);
+		System.out.println("Data cols: " + data.cols);
+		System.out.println("Total Data Count : " + data.valueCount);
+		System.out.println("Total Data Values : " + data.valueSum);
+		System.out.println("Average Data Values : " + data.valueAverage);
+		System.out.println("Minimum Data Value: " + data.valueMin);
+		System.out.println("Maximum Data Value: " + data.valueMax);
+		
 		System.out.println("Computing Time: " + computingTime + "ms");
 		
 	}
