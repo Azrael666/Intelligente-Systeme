@@ -1,7 +1,5 @@
 package aufgabe_2;
 
-import java.awt.Point;
-
 public class Main {
 	
 	/**
@@ -9,46 +7,80 @@ public class Main {
 	 */
 	static private String dataFileName = "data0.csv";
 	static private String labelFileName = "label0.csv";
+	static private DataObject data;
+	static private LabelObject label;
 	static private boolean safeImages = false;
+	
+	private static void calcFScore() {
+		
+		double recall = 0.0;
+		double precision = 0.0;
+		double fScore = 0.0;
+		
+		int actualLabels = label.points.size();
+		int totalLabeled = data.localMaxima.size();
+		int correctLabeled = 0;
+
+		// TODO get correctly labeled labels
+		
+		
+		
+		recall = correctLabeled / actualLabels;
+		
+		precision = correctLabeled / totalLabeled;
+		
+		fScore = 2 / (1/recall + 1/precision);
+		
+		System.out.println("Recall: " + recall);
+		System.out.println("Precision: " + precision);
+		System.out.println("FScore: " + fScore);
+	}
+	
 	
 	public static void main(String[] args) {
 		
 		long startTime = System.currentTimeMillis();
 		
-		DataObject data = new DataObject(dataFileName);
-		LabelObject label = new LabelObject(labelFileName);
+		data = new DataObject(dataFileName);
+		label = new LabelObject(labelFileName);
 		
-		data.draw(safeImages);
+		data.draw(label.points, safeImages);
 		
-		long endTime = System.currentTimeMillis();
-		long computingTime = endTime - startTime;
-	
-		// Testen, ob der Durchschnittswert der Spalte, in der das Maximum liegt unter dem Maximum ist
-		boolean test[] = new boolean[label.points.size()];
-		int counterFalse = 0;
+		double[] labelPercent = new double[label.points.size()];
+		double labelPercentSum = 0.0;
+		double labelPercentMin = Double.MAX_VALUE;
+		double labelPercentMax = 0.0;
+		
 		for(int i = 0; i < label.points.size(); i++) {
-			if(data.values[label.points.get(i).x][label.points.get(i).y] >=    data.colAverage[label.points.get(i).y]   ) test[i] = true;
-			else {
-				test[i] = false;
-				counterFalse++;
+			double value = data.values[label.points.get(i).x][label.points.get(i).y];
+			double colAverage = data.colAverage[label.points.get(i).y];
+			if(colAverage >= 530) {
+				double labelPercentage = (value / colAverage)-1;
+				if(labelPercentMin >= labelPercentage)
+					labelPercentMin = labelPercentage;
+				if(labelPercentMax <= labelPercentage)
+					labelPercentMax = labelPercentage;
+				labelPercentSum += labelPercentage;			
+				labelPercent[i] = (labelPercentage);
 			}
 		}
 		
-		for(int i = 0; i < test.length; i++) {
-			if(!test[i]) System.out.println(i + ": " + label.points.get(i));
-		}
-			
-		int look = 0;
-		Point point = label.points.get(look);
-		System.out.println("Point " + look + ": " + point);
-		System.out.println("Point x coordinate: " + point.x);
-		System.out.println("Point y coordinate: " + point.y);
-		System.out.println("Data Value of Point " + look + ": " + data.values[point.x][point.y]);
-		System.out.println("Col " + point.y + " Average: " + data.colAverage[point.y]);
-		System.out.println("Col " + point.y + " Minimum: " + data.colMinimum[point.y]);
-		System.out.println("Col " + point.y + " Maximum: " + data.colMaximum[point.y]);
-			
-		System.out.println("Failed Tests: " + counterFalse + " / " +test.length);
+		double averageLabelPercent = (labelPercentSum / (double)labelPercent.length);
+		
+		calcFScore();
+		
+		long endTime = System.currentTimeMillis();
+		long computingTime = endTime - startTime;
+		
+		
+		System.out.println(data.colAverage[100]);
+		System.out.println(data.colAverage[200]);
+		System.out.println(data.colAverage[400]);
+		System.out.println(data.colAverage[600]);
+		System.out.println(data.colAverage[650]);
+		System.out.println(data.colAverage[700]);
+		System.out.println(data.colAverage[800]);
+		System.out.println(data.colAverage[900]);
 		
 		
 		System.out.println("Data rows: " + data.rows);
@@ -58,8 +90,11 @@ public class Main {
 		System.out.println("Average Data Values : " + data.valueAverage);
 		System.out.println("Minimum Data Value: " + data.valueMin);
 		System.out.println("Maximum Data Value: " + data.valueMax);
+		System.out.println("Found local maxima: " + data.localMaxima.size());
+		System.out.println("Lowest label percent: " + labelPercentMin);
+		System.out.println("Highest label percent: " + labelPercentMax);
+		System.out.println("Average label percent above average: " + averageLabelPercent);
 		
 		System.out.println("Computing Time: " + computingTime + "ms");
-		
 	}
 }

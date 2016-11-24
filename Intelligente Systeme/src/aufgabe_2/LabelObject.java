@@ -15,9 +15,9 @@ public class LabelObject {
 	LabelObject (String inputFileName) {
 		
 		points = new LinkedList<Point>();
+		
 		try{
 			
-		
 		BufferedReader input = new BufferedReader(new FileReader(inputFileName));
 
 		String line;

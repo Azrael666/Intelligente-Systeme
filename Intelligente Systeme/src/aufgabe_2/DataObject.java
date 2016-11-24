@@ -1,10 +1,13 @@
 package aufgabe_2;
 
+import java.awt.Point;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -16,12 +19,14 @@ import org.jzy3d.colors.colormaps.ColorMapRainbow;
 import org.jzy3d.maths.Coord2d;
 import org.jzy3d.maths.Coord3d;
 import org.jzy3d.plot3d.primitives.MultiColorScatter;
+import org.jzy3d.plot3d.primitives.Scatter;
 
 public class DataObject {
 	double[][] values;
 	double[] colAverage;
 	double[] colMinimum;
 	double[] colMaximum;
+	List<Coord3d> localMaxima;
 	int rows = 0;
 	int cols = 0;
 	int size = 0;
@@ -95,24 +100,64 @@ public class DataObject {
 				colMinimum[i] = colMin;
 				colMaximum[i] = colMax;
 			}
+			
+			// Get local maxima
+			localMaxima = new LinkedList<Coord3d>();
+
+			for(int i = 0; i < rows; i++) {
+				for(int j = 0; j < cols; j++) {
+					boolean isMaxima = true;
+					double value = values[i][j];
+					
+					if(!checkNeighbors(i, j, 5))
+						isMaxima = false;
+					
+					// Add point to localMaxima list if it is a local maxima
+					if(isMaxima) {
+						// Only add the local maxima if it is at least 3% above the column average
+						if(value >= (colAverage[j] *1.025))
+							localMaxima.add(new Coord3d(i, j, value));
+					}
+				}
+			}
 	}
 	
-	public void draw(boolean safeImages) {
+	
+	public boolean checkNeighbors(int row, int col, int radius) {
 		
+		boolean isMaximum = true;
+		double value = values[row][col];
+		
+		 for(int x = row-radius; x <= row+radius; x++){
+			   for(int y = col-radius; y <= col+radius; y++){
+				   if(0<=x && x<rows && 0<=y && y<cols){
+					   if(values[x][y] > value)
+						   isMaximum = false;
+				   }
+			   }
+			}
+		 return isMaximum;
+	}
+	
+	
+	
+	public void draw(List<Point> labels, boolean safeImages) {
+		
+		// Data drawing
 		int x;
 		int y;
 		double z;
-		Coord3d[] points = new Coord3d[size];
+		Coord3d[] pointsValue = new Coord3d[size];
 
 		int coordCounter = 0;
 		
-		// Create scatter points
+		// Create data scatter points
 		for(int i=0; i<rows; i++){
 			for(int j = 0; j < cols; j++) {
 				x = i;
 			    y = j;
 			    z = values[i][j];
-			    points[coordCounter] = new Coord3d(x, y, z);
+			    pointsValue[coordCounter] = new Coord3d(x, y, z);
 			    coordCounter++;
 			}
 		    
@@ -121,13 +166,29 @@ public class DataObject {
 		// Create a drawable scatter with a colormap
 		ColorMapRainbow colorMapRainbow = new ColorMapRainbow();
 		ColorMapper colorMapper = new ColorMapper(colorMapRainbow , (int)valueMin, (int)valueMax);
-		MultiColorScatter scatter = new MultiColorScatter( points, colorMapper);
+		MultiColorScatter scatterValue = new MultiColorScatter( pointsValue, colorMapper);
 		
-		// Create a chart and add scatter
+		
+		// Label drawing
+		
+		Coord3d[] pointsLabel = new Coord3d[labels.size()];
+		
+		// Create label scatter points
+		for(int i = 0; i < pointsLabel.length; i++) {
+			x = labels.get(i).x;
+			y = labels.get(i).y;
+			z = values[labels.get(i).x][labels.get(i).y];
+			pointsLabel[i] = new Coord3d(x, y, z);
+		}
+		
+		Scatter scatterLabel = new Scatter(pointsLabel, Color.WHITE);
+		scatterLabel.setWidth(5);
+		// Create a chart and add scatters
 		Chart chart = new Chart();
 		chart.getAxeLayout().setMainColor(Color.WHITE);
 		chart.getView().setBackgroundColor(Color.BLACK);
-		chart.getScene().add(scatter);
+		chart.getScene().add(scatterValue);
+		chart.getScene().add(scatterLabel);
 		chart.getView().rotate(new Coord2d(0.0, -0.5), true);
 		ChartLauncher.openChart(chart);
 		
