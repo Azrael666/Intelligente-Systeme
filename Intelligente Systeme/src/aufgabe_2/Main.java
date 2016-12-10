@@ -1,28 +1,75 @@
 package aufgabe_2;
 
+import java.awt.Point;
+import java.util.List;
+
+
 public class Main {
 	
 	/**
 	 * Global variables
 	 */
-	static private String dataFileName = "data0.csv";
-	static private String labelFileName = "label0.csv";
+	static private String dataFileName = "data2.csv";
+	static private String labelFileName = "label2.csv";
 	static private DataObject data;
 	static private LabelObject label;
+	static private boolean drawData = false;
 	static private boolean safeImages = false;
+	static private boolean printStatistics = true;
+	static private boolean printDebug = false;
+	static private int correctLabelRange = 10;
 	
+	// Get correct found local maxima
+	private static int checkCorrectLabels(List<Point> labels, List<Point> maxima) {
+		int correctLabels = 0;
+		
+		// Check every label
+		for(Point p : labels) {
+			double pValue = data.values[p.x][p.y];
+			
+			// Check ervery found local Maxima
+			for(Point m : maxima) {
+				double mValue = data.values[m.x][m.y];
+				
+				// If the found local Maxima is within range of the label
+				// and it's value is greater or equal to the value of the label
+				// then this label was found correctly
+				if(isInRange(p, m, correctLabelRange) && pValue >= mValue)
+				{
+					correctLabels++;
+					break;
+				}
+			}
+		}
+		
+		return correctLabels;
+	}
+	
+	// Checks, if 2 points are within given range (neighborhood)
+	private static boolean isInRange(Point p1, Point p2, int range) {
+		
+		int x = p1.x - p2.x;
+		int y = p1.y - p2.y;
+		
+		if(x >= - range && x <= range && y >= - range && y <= range)
+			return true;
+		
+		return false;
+	}
+	
+	// Calculate recall, precision & fScore and print related data to the console
 	private static void calcFScore() {
 		
 		double recall = 0.0;
 		double precision = 0.0;
 		double fScore = 0.0;
 		
-		int actualLabels = label.points.size();
-		int totalLabeled = data.localMaxima.size();
-		int correctLabeled = 0;
+		double actualLabels = label.points.size();
+		double totalLabeled = data.localMaxima.size();
+		double correctLabeled = 0;
 
-		// TODO get correctly labeled labels
 		
+		correctLabeled = checkCorrectLabels(label.points, data.localMaxima);
 		
 		
 		recall = correctLabeled / actualLabels;
@@ -31,26 +78,23 @@ public class Main {
 		
 		fScore = 2 / (1/recall + 1/precision);
 		
+		System.out.println("\nTotal Labels: " + actualLabels);
+		System.out.println("Maxima found: " + totalLabeled);
+		System.out.println("Labels found: " + correctLabeled + "\n");
 		System.out.println("Recall: " + recall);
 		System.out.println("Precision: " + precision);
 		System.out.println("FScore: " + fScore);
 	}
 	
+	// Prints additional statistic data to the console
+	private static void printStatistics() {
 	
-	public static void main(String[] args) {
-		
-		long startTime = System.currentTimeMillis();
-		
-		data = new DataObject(dataFileName);
-		label = new LabelObject(labelFileName);
-		
-		data.draw(label.points, safeImages);
-		
 		double[] labelPercent = new double[label.points.size()];
 		double labelPercentSum = 0.0;
 		double labelPercentMin = Double.MAX_VALUE;
 		double labelPercentMax = 0.0;
 		
+		// Calculate  label statistics
 		for(int i = 0; i < label.points.size(); i++) {
 			double value = data.values[label.points.get(i).x][label.points.get(i).y];
 			double colAverage = data.colAverage[label.points.get(i).y];
@@ -67,34 +111,59 @@ public class Main {
 		
 		double averageLabelPercent = (labelPercentSum / (double)labelPercent.length);
 		
-		calcFScore();
-		
-		long endTime = System.currentTimeMillis();
-		long computingTime = endTime - startTime;
-		
-		
-		System.out.println(data.colAverage[100]);
-		System.out.println(data.colAverage[200]);
-		System.out.println(data.colAverage[400]);
-		System.out.println(data.colAverage[600]);
-		System.out.println(data.colAverage[650]);
-		System.out.println(data.colAverage[700]);
-		System.out.println(data.colAverage[800]);
-		System.out.println(data.colAverage[900]);
-		
-		
 		System.out.println("Data rows: " + data.rows);
 		System.out.println("Data cols: " + data.cols);
 		System.out.println("Total Data Count : " + data.valueCount);
-		System.out.println("Total Data Values : " + data.valueSum);
-		System.out.println("Average Data Values : " + data.valueAverage);
+		
+		System.out.println("\nSum of Data Values : " + data.valueSum);
+		System.out.println("Average Data Value: " + data.valueAverage);
 		System.out.println("Minimum Data Value: " + data.valueMin);
 		System.out.println("Maximum Data Value: " + data.valueMax);
-		System.out.println("Found local maxima: " + data.localMaxima.size());
-		System.out.println("Lowest label percent: " + labelPercentMin);
-		System.out.println("Highest label percent: " + labelPercentMax);
-		System.out.println("Average label percent above average: " + averageLabelPercent);
+
+		System.out.println("\nLabel value above col average in percent");
+		System.out.println("Minimum: " + labelPercentMin);
+		System.out.println("Maximum: " + labelPercentMax);
+		System.out.println("Average: " + averageLabelPercent);
 		
-		System.out.println("Computing Time: " + computingTime + "ms");
+	}
+	
+	public static void main(String[] args) {
+		
+		long startTime = System.currentTimeMillis();
+		
+		data = new DataObject(dataFileName);
+		
+		label = new LabelObject(labelFileName);
+		
+		if(drawData) {
+			Drawing drawing = new Drawing(data, label, safeImages);
+			drawing.draw();
+		}
+		
+		
+		long endTime = System.currentTimeMillis();
+		long computingTime = endTime - startTime;
+
+		
+		// Debug stuff
+		if(printDebug) {
+			int count = 0;
+			for(Point p : data.localMaxima) {
+//				if(p.y <= 900 && p.y >= 600) {
+				if(p.y <= 200) {
+					System.out.println("(" + p.x + " "  + p.y + "): " + data.values[p.x][p.y]);
+					count++;
+				}
+			}
+			System.out.println(count);	
+		}
+		
+		
+		if(printStatistics)
+			printStatistics();
+		
+		calcFScore();
+		
+		System.out.println("\nComputing Time: " + computingTime + "ms");
 	}
 }

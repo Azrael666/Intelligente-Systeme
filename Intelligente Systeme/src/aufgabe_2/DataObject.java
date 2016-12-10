@@ -7,26 +7,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.LinkedList;
-import java.util.List;
-
-import javax.imageio.ImageIO;
-
-import org.jzy3d.chart.Chart;
-import org.jzy3d.chart.ChartLauncher;
-import org.jzy3d.colors.Color;
-import org.jzy3d.colors.ColorMapper;
-import org.jzy3d.colors.colormaps.ColorMapRainbow;
-import org.jzy3d.maths.Coord2d;
-import org.jzy3d.maths.Coord3d;
-import org.jzy3d.plot3d.primitives.MultiColorScatter;
-import org.jzy3d.plot3d.primitives.Scatter;
+import java.util.List; 	
 
 public class DataObject {
 	double[][] values;
 	double[] colAverage;
+	double[] colMedian;
 	double[] colMinimum;
 	double[] colMaximum;
-	List<Coord3d> localMaxima;
+	List<Point> localMaxima;
 	int rows = 0;
 	int cols = 0;
 	int size = 0;
@@ -62,6 +51,7 @@ public class DataObject {
 			colAverage = new double[cols];
 			colMinimum = new double[cols];
 			colMaximum = new double[cols];
+			colMedian = new double[cols];
 			
 			input.reset();
 			for(int i = 0; i < rows; i++) {
@@ -101,28 +91,93 @@ public class DataObject {
 				colMaximum[i] = colMax;
 			}
 			
+			// Calculate col Median
+			
+			for(int i = 0; i < cols; i++) {
+				List<Double> valueList= new LinkedList<Double>();
+				for(int j = 0; j < rows; j++) {
+					valueList.add(values[j][i]);
+				}
+				valueList.sort((Double a, Double b)->Double.compare(a, b));
+				colMedian[i] = valueList.get(699);
+			}
+			
+			
 			// Get local maxima
-			localMaxima = new LinkedList<Coord3d>();
+			localMaxima = new LinkedList<Point>();
 
 			for(int i = 0; i < rows; i++) {
 				for(int j = 0; j < cols; j++) {
 					boolean isMaxima = true;
 					double value = values[i][j];
 					
-					if(!checkNeighbors(i, j, 5))
-						isMaxima = false;
 					
-					// Add point to localMaxima list if it is a local maxima
+					// If the local maximum is not at least 2,7% above the column average, maximum is not valid
+					// 5%
 					if(isMaxima) {
-						// Only add the local maxima if it is at least 3% above the column average
-						if(value >= (colAverage[j] *1.025))
-							localMaxima.add(new Coord3d(i, j, value));
+					if(value < (colAverage[j] *1.027))
+						isMaxima = false;
+					}
+					
+					// If the local maximum's value is not above the 550th element's value, maximum is not valid
+					// 700
+					if(isMaxima) {
+					if(value < (colMedian[j]))
+						isMaxima = false;
+					}
+
+					// If the local maximum's value is not at least 89% of col's maximum, maximum is not valid
+					// 97
+					if(isMaxima) {
+					if(value < (colMaximum[j])*0.95)
+						isMaxima = false;
+					}
+					
+					// If there is an bigger maximum within 8 cells range, this maximum is not valid
+					// 15 cells
+					if(isMaxima) {
+					if(!checkNeighbors(i, j, 15))
+						isMaxima = false;
+					}
+					
+					// Add point to localMaxima list, only if it is a local maximum
+					if(isMaxima) {
+						localMaxima.add(new Point(i, j));
 					}
 				}
 			}
+			
+			
+			//Merge different local maxima, if all values between them have the same height
+			
+			List<Point> localMaximaTemp = new LinkedList<Point>();
+			
+			// Copy list
+			for(Point p : localMaxima)
+				localMaximaTemp.add(p);
+			
+			
+			for(int i = 0; i < localMaxima.size(); i++) {
+				Point p1 = localMaxima.get(i);
+				double value1 = values[p1.x][p1.y]; 
+				
+				for(int j = 0; j < localMaximaTemp.size(); j++) {
+					Point p2 = localMaximaTemp.get(j);
+					double value2 = values[p2.x][p2.y];
+					int distance1 = p1.x -  p2.x;
+					int distance2 = p1.y - p2.y;
+					distance1 = Math.abs(distance1);
+					distance2 = Math.abs(distance2);
+					
+					if(value1 == value2 && (distance1 < 10 || distance2 < 10) && !(p1.equals(p2))) {
+						localMaxima.remove(p2);
+					}
+				}
+			}
+
 	}
 	
-	
+	// Check all neighbors within radius for bigger value
 	public boolean checkNeighbors(int row, int col, int radius) {
 		
 		boolean isMaximum = true;
@@ -130,84 +185,14 @@ public class DataObject {
 		
 		 for(int x = row-radius; x <= row+radius; x++){
 			   for(int y = col-radius; y <= col+radius; y++){
-				   if(0<=x && x<rows && 0<=y && y<cols){
-					   if(values[x][y] > value)
+				   if(x >= 0 && x < rows && y >= 0 && y < cols && !(x == row && y == col)){
+					   if(values[x][y] > value ) {
 						   isMaximum = false;
+					   }
 				   }
 			   }
 			}
 		 return isMaximum;
-	}
-	
-	
-	
-	public void draw(List<Point> labels, boolean safeImages) {
-		
-		// Data drawing
-		int x;
-		int y;
-		double z;
-		Coord3d[] pointsValue = new Coord3d[size];
-
-		int coordCounter = 0;
-		
-		// Create data scatter points
-		for(int i=0; i<rows; i++){
-			for(int j = 0; j < cols; j++) {
-				x = i;
-			    y = j;
-			    z = values[i][j];
-			    pointsValue[coordCounter] = new Coord3d(x, y, z);
-			    coordCounter++;
-			}
-		    
-		}
-		
-		// Create a drawable scatter with a colormap
-		ColorMapRainbow colorMapRainbow = new ColorMapRainbow();
-		ColorMapper colorMapper = new ColorMapper(colorMapRainbow , (int)valueMin, (int)valueMax);
-		MultiColorScatter scatterValue = new MultiColorScatter( pointsValue, colorMapper);
-		
-		
-		// Label drawing
-		
-		Coord3d[] pointsLabel = new Coord3d[labels.size()];
-		
-		// Create label scatter points
-		for(int i = 0; i < pointsLabel.length; i++) {
-			x = labels.get(i).x;
-			y = labels.get(i).y;
-			z = values[labels.get(i).x][labels.get(i).y];
-			pointsLabel[i] = new Coord3d(x, y, z);
-		}
-		
-		Scatter scatterLabel = new Scatter(pointsLabel, Color.WHITE);
-		scatterLabel.setWidth(5);
-		// Create a chart and add scatters
-		Chart chart = new Chart();
-		chart.getAxeLayout().setMainColor(Color.WHITE);
-		chart.getView().setBackgroundColor(Color.BLACK);
-		chart.getScene().add(scatterValue);
-		chart.getScene().add(scatterLabel);
-		chart.getView().rotate(new Coord2d(0.0, -0.5), true);
-		ChartLauncher.openChart(chart);
-		
-		// Safe Images
-		if(safeImages) {
-			for(int i = 0; i < 63; i++) {
-				Coord2d rotateCoord= new Coord2d(0.1, 0.0);
-				chart.getView().rotate(rotateCoord, true);
-				
-				File outputfile = new File("Images\\Data0\\image" + i + ".jpg");
-				try {
-					ImageIO.write(chart.screenshot(), "jpg", outputfile);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-//		System.out.println("Barycentre: " + scatter.getBarycentre());
-		
 	}
 	
 }

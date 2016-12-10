@@ -12,7 +12,7 @@ public class LabelObject {
 	List<Point> points;
 	int size;
 	
-	LabelObject (String inputFileName) {
+	public LabelObject (String inputFileName) {
 		
 		points = new LinkedList<Point>();
 		
