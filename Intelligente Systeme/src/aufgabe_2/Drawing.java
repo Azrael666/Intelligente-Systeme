@@ -69,6 +69,7 @@ public class Drawing {
 		
 		Scatter scatterLabel = new Scatter(pointsLabel, Color.WHITE);
 		scatterLabel.setWidth(5);
+		
 		// Create a chart and add scatters
 		Chart chart = new Chart();
 		chart.getAxeLayout().setMainColor(Color.WHITE);
@@ -78,7 +79,7 @@ public class Drawing {
 		chart.getView().rotate(new Coord2d(0.0, -0.5), true);
 		ChartLauncher.openChart(chart);
 		
-		// Safe Images
+		// Generate images for GIF
 		if(safeImages) {
 			for(int i = 0; i < 63; i++) {
 				Coord2d rotateCoord= new Coord2d(0.1, 0.0);

@@ -9,32 +9,43 @@ public class Main {
 	/**
 	 * Global variables
 	 */
-	static private String dataFileName = "data2.csv";
-	static private String labelFileName = "label2.csv";
 	static private DataObject data;
 	static private LabelObject label;
+	
+	// File names
+	static private String dataFileName = "data2.csv";
+	static private String labelFileName = "label2.csv";
+	
+	// Main parameters
 	static private boolean drawData = false;
 	static private boolean safeImages = false;
-	static private boolean printStatistics = true;
-	static private boolean printDebug = false;
+	static private boolean printAdditionalStatistics = false;
+	
+	// Algorithm parameters
+	static private double columnAverageRequirement = 0.0339;
+	static private int sortedColumnIndexRequirement = 606;
+	static private double columnMaximumPercentageRequirement = 0.9116;
+	static private int maxiumNeighborhoodRequirement = 14;
+	
+	// FScore evaluation parameter
 	static private int correctLabelRange = 10;
 	
 	// Get correct found local maxima
-	private static int checkCorrectLabels(List<Point> labels, List<Point> maxima) {
+	private static int checkCorrectLabels(List<Point> labels, List<Point> maxima, int LabelRange) {
 		int correctLabels = 0;
 		
 		// Check every label
 		for(Point p : labels) {
 			double pValue = data.values[p.x][p.y];
 			
-			// Check ervery found local Maxima
+			// Check every found local Maxima
 			for(Point m : maxima) {
 				double mValue = data.values[m.x][m.y];
 				
-				// If the found local Maxima is within range of the label
+				// If the found local Maxima is within <LabelRange> range of the label
 				// and it's value is greater or equal to the value of the label
 				// then this label was found correctly
-				if(isInRange(p, m, correctLabelRange) && pValue >= mValue)
+				if(isInRange(p, m, LabelRange) && pValue >= mValue)
 				{
 					correctLabels++;
 					break;
@@ -58,7 +69,7 @@ public class Main {
 	}
 	
 	// Calculate recall, precision & fScore and print related data to the console
-	private static void calcFScore() {
+	private static void calcFScore(int labelRange) {
 		
 		double recall = 0.0;
 		double precision = 0.0;
@@ -69,14 +80,14 @@ public class Main {
 		double correctLabeled = 0;
 
 		
-		correctLabeled = checkCorrectLabels(label.points, data.localMaxima);
+		correctLabeled = checkCorrectLabels(label.points, data.localMaxima, labelRange);
 		
 		
 		recall = correctLabeled / actualLabels;
 		
 		precision = correctLabeled / totalLabeled;
 		
-		fScore = 2 / (1/recall + 1/precision);
+		fScore = 2 / (1 / recall + 1 / precision);
 		
 		System.out.println("\nTotal Labels: " + actualLabels);
 		System.out.println("Maxima found: " + totalLabeled);
@@ -132,6 +143,7 @@ public class Main {
 		long startTime = System.currentTimeMillis();
 		
 		data = new DataObject(dataFileName);
+		data.evalData(columnAverageRequirement, sortedColumnIndexRequirement, columnMaximumPercentageRequirement, maxiumNeighborhoodRequirement);
 		
 		label = new LabelObject(labelFileName);
 		
@@ -140,30 +152,16 @@ public class Main {
 			drawing.draw();
 		}
 		
-		
 		long endTime = System.currentTimeMillis();
 		long computingTime = endTime - startTime;
-
 		
-		// Debug stuff
-		if(printDebug) {
-			int count = 0;
-			for(Point p : data.localMaxima) {
-//				if(p.y <= 900 && p.y >= 600) {
-				if(p.y <= 200) {
-					System.out.println("(" + p.x + " "  + p.y + "): " + data.values[p.x][p.y]);
-					count++;
-				}
-			}
-			System.out.println(count);	
-		}
-		
-		
-		if(printStatistics)
+		if(printAdditionalStatistics)
 			printStatistics();
 		
-		calcFScore();
+		calcFScore(correctLabelRange);
 		
 		System.out.println("\nComputing Time: " + computingTime + "ms");
 	}
+	
+
 }
