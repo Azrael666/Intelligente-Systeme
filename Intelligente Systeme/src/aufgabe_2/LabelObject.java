@@ -7,15 +7,30 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * 
+ * @author Alexandra Scheben, Dirk Teschner
+ *
+ * label object
+ * contains preset labels
+ *
+ */
 public class LabelObject {
 
-	List<Point> points;
-	int size;
+	//list of labels
+	private List<Point> points;
+	//list size
+	private int size;
 	
+	/**
+	 * constructor
+	 * @param inputFileName filename of the label sheet
+	 */
 	public LabelObject (String inputFileName) {
 		
-		points = new LinkedList<Point>();
+		LinkedList<Point> points = new LinkedList<Point>();
 		
+		// adding all points from the sheets to the list
 		try{
 			
 		BufferedReader input = new BufferedReader(new FileReader(inputFileName));
@@ -37,6 +52,41 @@ public class LabelObject {
 			System.out.println(e.getMessage());
 		}
 		
-		size = points.size();
+		//set list
+		setPoints(points);
+		//set size
+		setSize(points.size());
+	}
+
+	/**
+	 * gets the list of points
+	 * @return list of points
+	 */
+	public List<Point> getPoints() {
+		return points;
+	}
+
+	/**
+	 * gets the size of the list of points
+	 * @return size of the list of points
+	 */
+	public int getSize() {
+		return size;
+	}
+
+	/**
+	 * sets the list of points
+	 * @param points list of points
+	 */
+	public void setPoints(List<Point> points) {
+		this.points = points;
+	}
+
+	/**
+	 * sets the size of the list
+	 * @param size size of the list
+	 */
+	public void setSize(int size) {
+		this.size = size;
 	}
 }

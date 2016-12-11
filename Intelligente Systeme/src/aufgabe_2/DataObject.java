@@ -9,24 +9,36 @@ import java.io.LineNumberReader;
 import java.util.LinkedList;
 import java.util.List; 	
 
+/**
+ * 
+ * @author Alexandra Scheben, Dirk Teschner
+ * 
+ * data object
+ * contains the data to be analysed
+ *
+ */
 public class DataObject {
-	double[][] values;
-	double[][] sortedColValues;
-	double[] colAverage;
-	double[] colMedian;
-	double[] colMinimum;
-	double[] colMaximum;
-	List<Point> localMaxima;
-	int rows = 0;
-	int cols = 0;
-	int size = 0;
+	private double[][] values;
+	private double[][] sortedColValues;
+	private double[] colAverage;
+	private double[] colMedian;
+	private double[] colMinimum;
+	private double[] colMaximum;
+	private List<Point> localMaxima;
+	private int rows = 0;
+	private int cols = 0;
+	private int size = 0;
 	
-	int valueCount = 0;
-	double valueMin = Double.MAX_VALUE;
-	double valueMax = Double.MIN_VALUE;
-	double valueSum = 0;
-	double valueAverage = 0;
+	private int valueCount = 0;
+	private double valueMin = Double.MAX_VALUE;
+	private double valueMax = Double.MIN_VALUE;
+	private double valueSum = 0;
+	private double valueAverage = 0;
 	
+	/**
+	 * constructor
+	 * @param inputFileName filename of the data sheet
+	 */
 	public DataObject(String inputFileName) {
 		
 		try{						
@@ -74,6 +86,7 @@ public class DataObject {
 			}
 			input.close();
 			
+			//calculate avg
 			valueAverage = valueSum / valueCount;
 				
 			} catch (IOException e) {
@@ -82,20 +95,148 @@ public class DataObject {
 			
 	}
 	
-	// Get local maxima
+	public double[][] getValues() {
+		return values;
+	}
+
+	public double[][] getSortedColValues() {
+		return sortedColValues;
+	}
+
+	public double[] getColAverage() {
+		return colAverage;
+	}
+
+	public double[] getColMedian() {
+		return colMedian;
+	}
+
+	public double[] getColMinimum() {
+		return colMinimum;
+	}
+
+	public double[] getColMaximum() {
+		return colMaximum;
+	}
+
+	public List<Point> getLocalMaxima() {
+		return localMaxima;
+	}
+
+	public int getRows() {
+		return rows;
+	}
+
+	public int getCols() {
+		return cols;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public int getValueCount() {
+		return valueCount;
+	}
+
+	public double getValueMin() {
+		return valueMin;
+	}
+
+	public double getValueMax() {
+		return valueMax;
+	}
+
+	public double getValueSum() {
+		return valueSum;
+	}
+
+	public double getValueAverage() {
+		return valueAverage;
+	}
+
+	public void setValues(double[][] values) {
+		this.values = values;
+	}
+
+	public void setSortedColValues(double[][] sortedColValues) {
+		this.sortedColValues = sortedColValues;
+	}
+
+	public void setColAverage(double[] colAverage) {
+		this.colAverage = colAverage;
+	}
+
+	public void setColMedian(double[] colMedian) {
+		this.colMedian = colMedian;
+	}
+
+	public void setColMinimum(double[] colMinimum) {
+		this.colMinimum = colMinimum;
+	}
+
+	public void setColMaximum(double[] colMaximum) {
+		this.colMaximum = colMaximum;
+	}
+
+	public void setLocalMaxima(List<Point> localMaxima) {
+		this.localMaxima = localMaxima;
+	}
+
+	public void setRows(int rows) {
+		this.rows = rows;
+	}
+
+	public void setCols(int cols) {
+		this.cols = cols;
+	}
+
+	public void setSize(int size) {
+		this.size = size;
+	}
+
+	public void setValueCount(int valueCount) {
+		this.valueCount = valueCount;
+	}
+
+	public void setValueMin(double valueMin) {
+		this.valueMin = valueMin;
+	}
+
+	public void setValueMax(double valueMax) {
+		this.valueMax = valueMax;
+	}
+
+	public void setValueSum(double valueSum) {
+		this.valueSum = valueSum;
+	}
+
+	public void setValueAverage(double valueAverage) {
+		this.valueAverage = valueAverage;
+	}
+
+	/**
+	 * evaluates data and calculates local maxima
+	 * @param columnAverage average value of the column
+	 * @param sortedColumnIndex index that a point must be at least on to be a maximum
+	 * @param columnMaximumPercentage point's value has to be at least columnMaximum*maximumPercentage to be a maximum
+	 * @param maximumNeighborhoodRange value has to be greatest in neighborhood to be maximum
+	 */
 	public void evalData(double columnAverage, int sortedColumnIndex, double columnMaximumPercentage, int maximumNeighborhoodRange) {
 		
 		calculateColAverage();
 		
-		getSortedValues();			
+		caluclateSortedValues();			
 		
-		getLocalMaxima(columnAverage, sortedColumnIndex, columnMaximumPercentage, maximumNeighborhoodRange);
+		calculateLocalMaximaPerColumn(columnAverage, sortedColumnIndex, columnMaximumPercentage, maximumNeighborhoodRange);
 		
 		mergeLocalMaxima();
 	}
 	
 	
-	// Calculate col average
+	/**
+	 * calculates the average values of all columns
+	 */
 	public void calculateColAverage() {
 		
 		for(int i = 0; i < cols; i++) {
@@ -115,8 +256,12 @@ public class DataObject {
 		}
 	}
 	
-	// Get value-sorted list for each col
-	public void getSortedValues() {
+	/**
+	 * for each column, a list containing all column values is created
+	 * the list is sorted
+	 * all lists are stored in sortedColValues
+	 */
+	public void caluclateSortedValues() {
 		
 		for(int i = 0; i < cols; i++) {
 			List<Double> valueList= new LinkedList<Double>();
@@ -133,8 +278,14 @@ public class DataObject {
 		}
 	}
 	
-	// Get local maxima
-	public void getLocalMaxima(double columnAverage, int sortedColumnIndex, double columnMaximumPercentage, int maximumNeighborhoodRange) {
+	/**
+	 * calculates the local maxima in the column
+	 * @param columnAverage average value of the column
+	 * @param sortedColumnIndex index that a point must be at least on to be a maximum
+	 * @param columnMaximumPercentage point's value has to be at least columnMaximum*maximumPercentage to be a maximum
+	 * @param maximumNeighborhoodRange value has to be greatest in neighborhood to be maximum
+	 */
+	public void calculateLocalMaximaPerColumn(double columnAverage, int sortedColumnIndex, double columnMaximumPercentage, int maximumNeighborhoodRange) {
 
 		for(int i = 0; i < rows; i++) {
 			for(int j = 0; j < cols; j++) {
@@ -148,7 +299,7 @@ public class DataObject {
 					isMaxima = false;
 				}
 				
-				// If the local maximum's value is not above the <sortedColumnIndex> th element's value, maximum is not valid
+				// If the local maximum's value is not above the <sortedColumnIndex> the element's value, maximum is not valid
 				if(isMaxima) {
 				if(value < (sortedColValues[j][sortedColumnIndex]))
 					isMaxima = false;
@@ -174,8 +325,9 @@ public class DataObject {
 		}
 	}
 	
-
-	//Merge different local maxima, if all values between them have the same height
+	/**
+	 * Merges different local maxima if all values between them have the same height
+	 */
 	public void mergeLocalMaxima() {
 		
 		List<Point> localMaximaTemp = new LinkedList<Point>();
@@ -204,7 +356,13 @@ public class DataObject {
 		}
 	}
 	
-	// Check all neighbors within radius for bigger value
+	/**
+	 * Check all neighbors within radius for bigger value
+	 * @param row y coordinate of point
+	 * @param col  coordinate of point
+	 * @param radius radius to check within
+	 * @return true if there is no greater neighbor, else false
+	 */
 	public boolean checkNeighbors(int row, int col, int radius) {
 		
 		boolean isMaximum = true;

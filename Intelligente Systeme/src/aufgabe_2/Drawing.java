@@ -15,12 +15,28 @@ import org.jzy3d.maths.Coord3d;
 import org.jzy3d.plot3d.primitives.MultiColorScatter;
 import org.jzy3d.plot3d.primitives.Scatter;
 
+/**
+ * 
+ * @author Alexandra Scheben, Dirk Teschner
+ * 
+ * graphic representation of a data sheet and its respective label sheet
+ *
+ */
 public class Drawing {
 	
+	// data sheet
 	private DataObject data;
+	//label sheet
 	private LabelObject label;
+	// should the images be saved
 	private boolean safeImages;
 
+	/**
+	 * constructor
+	 * @param data data object
+	 * @param label respective label object
+	 * @param safeImages Should images be saved?
+	 */
 	public Drawing (DataObject data, LabelObject label, boolean safeImages) {
 	
 		this.data = data;
@@ -28,21 +44,24 @@ public class Drawing {
 		this.safeImages = safeImages;
 	}
 	
+	/**
+	 * Will generate a graphic representation of the data object and it respective label object
+	 */
 	public void draw() {
 		
 		int x;
 		int y;
 		double z;
-		Coord3d[] pointsValue = new Coord3d[data.size];
+		Coord3d[] pointsValue = new Coord3d[data.getSize()];
 
 		int coordCounter = 0;
 		
 		// Create data scatter points
-		for(int i=0; i<data.rows; i++){
-			for(int j = 0; j < data.cols; j++) {
+		for(int i=0; i<data.getRows(); i++){
+			for(int j = 0; j < data.getCols(); j++) {
 				x = i;
 			    y = j;
-			    z = data.values[i][j];
+			    z = data.getValues()[i][j];
 			    pointsValue[coordCounter] = new Coord3d(x, y, z);
 			    coordCounter++;
 			}
@@ -51,19 +70,18 @@ public class Drawing {
 		
 		// Create a drawable scatter with a colormap
 		ColorMapRainbow colorMapRainbow = new ColorMapRainbow();
-		ColorMapper colorMapper = new ColorMapper(colorMapRainbow , (int)data.valueMin, (int)data.valueMax);
+		ColorMapper colorMapper = new ColorMapper(colorMapRainbow , (int)data.getValueMin(), (int)data.getValueMax());
 		MultiColorScatter scatterValue = new MultiColorScatter( pointsValue, colorMapper);
 		
 		
 		// Label drawing
-		
-		Coord3d[] pointsLabel = new Coord3d[label.points.size()];
+		Coord3d[] pointsLabel = new Coord3d[label.getSize()];
 		
 		// Create label scatter points
 		for(int i = 0; i < pointsLabel.length; i++) {
-			x = label.points.get(i).x;
-			y = label.points.get(i).y;
-			z = data.values[label.points.get(i).x][label.points.get(i).y];
+			x = label.getPoints().get(i).x;
+			y = label.getPoints().get(i).y;
+			z = data.getValues()[label.getPoints().get(i).x][label.getPoints().get(i).y];
 			pointsLabel[i] = new Coord3d(x, y, z);
 		}
 		
