@@ -19,7 +19,7 @@ public class Main {
 	
 	// Main parameters
 	static private int calculateData = 2;
-	static private boolean drawData = false;
+	static private boolean drawData = true;
 	static private boolean safeImages = false;
 	static private boolean printAdditionalStatistics = false;
 	

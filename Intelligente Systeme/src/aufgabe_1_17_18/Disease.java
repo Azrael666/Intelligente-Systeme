@@ -2,12 +2,12 @@ package aufgabe_1_17_18;
 
 public class Disease {
 	
-	private double transmissionProbability;
-	int duration;
+	private final double transmissionProbability;
+	final int duration;
 	
-	public Disease(double transProb, int dur) {
-		transmissionProbability = transProb;
-		duration = dur;
+	public Disease(double transmissionProbability, int duration) {
+		this.transmissionProbability = transmissionProbability;
+		this.duration = duration;
 	}
 	
 	
@@ -17,14 +17,6 @@ public class Disease {
 
 	public int getDuration() {
 		return duration;
-	}
-
-	public void setTransmissionProbability(double transmissionProbability) {
-		this.transmissionProbability = transmissionProbability;
-	}
-
-	public void setDuration(int duration) {
-		this.duration = duration;
 	}
 
 

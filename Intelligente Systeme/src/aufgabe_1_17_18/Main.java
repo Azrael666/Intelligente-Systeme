@@ -11,12 +11,23 @@ public class Main {
 	static private String inputFileName = "Begegnungswahrscheinlichkeiten.txt";
 	
 	static private double[][] encounterProbabilities;
+	static private double transmissionProbability = 0.1;
+	static private int diseaseLength = 10;
+	
+	
 	
 	public static void main(String[] args) {
 		
 		encounterProbabilities = textToProbabilities();
 		
 		printProbabilities();
+		
+		
+		Population population = new Population(encounterProbabilities, transmissionProbability, diseaseLength);
+		
+		population.simulate();
+		
+		
 	}
 	
 	private static void printProbabilities() {

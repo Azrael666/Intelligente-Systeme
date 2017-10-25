@@ -1,18 +1,20 @@
 package aufgabe_1_17_18;
 
-public class Individuum {
+public class Individual {
 
 	private boolean sick;
 	private boolean immune;
 	private boolean contagious;
 	
-	private int number;
+	private final int number;
+	private int remainingDiseaseDuration;
 	
-	public Individuum(int number) {
+	public Individual(int number) {
 		sick = false;
 		immune = false;
 		contagious = false;
 		this.number = number;
+		remainingDiseaseDuration = 0;
 	}
 	
 	public boolean getSick() {
@@ -41,5 +43,13 @@ public class Individuum {
 	
 	public int getNumber() {
 		return number;
+	}
+	
+	public int getRemainingDiseaseDuration() {
+		return remainingDiseaseDuration;
+	}
+	
+	public void setRemainingDiseaseDuration(int remainingDiseaseDuration) {
+		this.remainingDiseaseDuration = remainingDiseaseDuration;
 	}
 }
