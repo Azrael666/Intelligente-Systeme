@@ -10,29 +10,27 @@ import java.util.List;
  */
 public class Main {
 	
-	/**
-	 * Global variables
-	 */
 	static private DataObject data;
 	static private LabelObject label;
 	
 	// File names
-	static private String dataFileName = "data2.csv";
-	static private String labelFileName = "label2.csv";
+	static private String[] dataFileName = {"data0.csv", "data1.csv", "data2.csv"} ;
+	static private String[] labelFileName = {"label0.csv", "label1.csv", "label2.csv"} ;
 	
 	// Main parameters
+	static private int calculateData = 2;
 	static private boolean drawData = false;
 	static private boolean safeImages = false;
 	static private boolean printAdditionalStatistics = false;
 	
 	// Algorithm parameters
-	static private double columnAverageRequirement = 0.0339;
-	static private int sortedColumnIndexRequirement = 606;
-	static private double columnMaximumPercentageRequirement = 0.9116;
-	static private int maxiumNeighborhoodRequirement = 14;
+	static private double columnAverageRequirement = 0.0481;
+	static private int sortedColumnIndexRequirement = 750;
+	static private double columnMaximumPercentageRequirement = 0.96;
+	static private int maxiumNeighborhoodRequirement = 15;
 	
 	// FScore evaluation parameter
-	static private int correctLabelRange = 10;
+	static private int correctLabelRange = 5;
 	
 	/**
 	 * checks if labels found are correct labels
@@ -88,7 +86,7 @@ public class Main {
 	 * Calculates recall, precision & fScore and print related data to the console
 	 * @param labelRange how far apart a maxima can be from a lable to be viewed as correctly labeled
 	 */
-	private static void calcFScore(int labelRange) {
+	private static double[] calcFScore(int labelRange) {
 		
 		double recall = 0.0;
 		double precision = 0.0;
@@ -114,6 +112,9 @@ public class Main {
 		System.out.println("Recall: " + recall);
 		System.out.println("Precision: " + precision);
 		System.out.println("FScore: " + fScore);
+		
+		double[] ret = {recall, precision, fScore};
+		return ret;
 	}
 	
 	/**
@@ -167,23 +168,44 @@ public class Main {
 		
 		long startTime = System.currentTimeMillis();
 		
-		data = new DataObject(dataFileName);
-		data.evalData(columnAverageRequirement, sortedColumnIndexRequirement, columnMaximumPercentageRequirement, maxiumNeighborhoodRequirement);
-		
-		label = new LabelObject(labelFileName);
-		
-		if(drawData) {
-			Drawing drawing = new Drawing(data, label, safeImages);
-			drawing.draw();
+		double[] eval = {0.0, 0.0, 0.0};
+		int i;
+		for(i = 0; i < calculateData; i++) {
+			System.out.println("Data " + i + ":");
+			data = new DataObject(dataFileName[i]);
+			data.evalData(columnAverageRequirement, sortedColumnIndexRequirement, columnMaximumPercentageRequirement, maxiumNeighborhoodRequirement);
+			
+			label = new LabelObject(labelFileName[i]);
+			
+			if(drawData) {
+				Drawing drawing = new Drawing(data, label, safeImages);
+				drawing.draw();
+			}
+			
+			if(printAdditionalStatistics)
+				printStatistics();
+			
+			double[] scores = calcFScore(correctLabelRange);
+			eval[0] += scores[0];
+			eval[1] += scores[1];
+			eval[2] += scores[2];
+			
+			System.out.println("----------\n");
 		}
+		
+		for(int j = 0; j < eval.length; j++) {
+			eval[j] /= i;
+		}
+		
+		System.out.println("Average Recall: " + eval[0]);
+		System.out.println("Average Precsion: " + eval[1]);
+		System.out.println("Average FScore: " + eval[2]);
+		
 		
 		long endTime = System.currentTimeMillis();
 		long computingTime = endTime - startTime;
 		
-		if(printAdditionalStatistics)
-			printStatistics();
 		
-		calcFScore(correctLabelRange);
 		
 		System.out.println("\nComputing Time: " + computingTime + "ms");
 	}
